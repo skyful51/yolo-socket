@@ -60,10 +60,10 @@ class Client:
             # 멀티스레드로 받아오는 프레임을 4개에 하나만 사용
             if n == 4:
                 success, im = cap.retrieve()
-                im = cv2.resize(im, dsize=None, fx=0.3, fy=0.3)
-                ret, self.enc_frame = cv2.imencode('.webp', im)
-                ts = datetime.fromtimestamp(time.time())
-                print(f'captured {self.cap_frame} th frame at {ts}')
+                im = cv2.resize(im, dsize=None, fx=0.5, fy=0.5)
+                im = cv2.rotate(im, cv2.ROTATE_90_CLOCKWISE)
+                encode_param=[int(cv2.IMWRITE_JPEG_QUALITY),75]
+                ret, self.enc_frame = cv2.imencode('.jpg', im, encode_param)
                 self.cap_frame += 1
                 n = 0
 
@@ -78,6 +78,8 @@ class Client:
             self.pickle_frame = pickle.dumps(self.enc_frame)  # 이미지 프레임 바이너리화
             self.msg_size = struct.pack("L", len(self.pickle_frame))
             self.socket.sendall(self.msg_size + self.pickle_frame)
+            ts = datetime.fromtimestamp(time.time())
+            print(f'send {self.cap_frame} th frame at {ts}')
         except Exception as e:
             pass
     
@@ -97,6 +99,8 @@ def main_function():
         while True:
             client.send_to_server()
             client.receive_from_server()
+            if cv2.waitKey(1) == ord('q'):
+                raise Exception
     except Exception as e:
         print(e)
         client.close_socket()
@@ -106,7 +110,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--host-id', type=str, required=True, help='host id or ip information.')
     parser.add_argument('--host-port', type=int, default=9999, help='host port number. default to 9999.')
-    parser.add_argument('--src', required=True, help='camera id(webcam) or ip(ip cam) information.')
+    parser.add_argument('--src', default='rtsp://admin:hikvision123@192.168.11.69:554/ISAPI/streaming/channels/101', help='camera id(webcam) or ip(ip cam) information.')
     opt = parser.parse_args()
     print(opt)
 
