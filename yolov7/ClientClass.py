@@ -15,7 +15,7 @@ class Client:
         self.HOST_PORT = host_port  # 연결할 서버의 포트 번호
         self.CAM_SRC = cam_src      # 카메라 소스(웹캠 인덱스 or IP 카메라 주소
 
-        self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM) # 인스턴스 내에서 사용할 소켓 객체
+        self.socket = socket.socket() # 인스턴스 내에서 사용할 소켓 객체
 
         for i in range(5):
             try:
