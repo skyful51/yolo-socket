@@ -75,7 +75,6 @@ class Server:
             self.dec_frame = cv2.imdecode(img, 1)
 
             ts = datetime.fromtimestamp(time.time())
-            print(f'decoded {self.img_idx}th frame at {ts}')
 
 
         except Exception as e:
@@ -86,12 +85,11 @@ class Server:
         self.client_socket.send('good'.encode())
 
         ts = datetime.fromtimestamp(time.time())
-        print(f'echo back {self.img_idx}th frame at {ts}')
 
     # 이미지 표출
     def show_frame(self):
         try:
-            cv2.imshow('server window', self.dec_frame)
+            cv2.imshow('server window', self.img_frame)
         except Exception as e:
             print(e)
 
@@ -200,6 +198,7 @@ class Server:
                             if self.view_img:  # Add bbox to image
                                 label = f'{self.names[int(cls)]} {conf:.2f}'
                                 plot_one_box(xyxy, im0, label=label, color=self.colors[int(cls)], line_thickness=1)
+                                self.img_frame = im0.copy()
 
                     # Print time (inference + NMS)
                     print(f'{s}Done. ({(1E3 * (t2 - t1)):.1f}ms) Inference, ({(1E3 * (t3 - t2)):.1f}ms) NMS')
@@ -219,7 +218,7 @@ def main_function():
 
     while True:
         server.receive_from_client()
-        server.show_frame()
+        # server.show_frame()
         server.yolo_inference()
         server.send_to_client()
         server.img_idx += 1
