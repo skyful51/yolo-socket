@@ -5,6 +5,8 @@ import cv2
 import numpy as np
 import struct
 import argparse
+from datetime import datetime
+import time
 
 # 클라이언트 클래스
 class Client:
@@ -15,6 +17,9 @@ class Client:
         self.HOST_PORT = host_port  # 연결할 서버의 포트 번호
         self.CAM_SRC = cam_src      # 카메라 소스(웹캠 인덱스 or IP 카메라 주소
 
+        self.cap_frame = 0          # 멀티스레드 상에서 얻은 프레임 수 인덱스
+        self.sent_frame = 0         # 소켓 통신으로 전송한 프레임 수 인덱스
+
         self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM) # 인스턴스 내에서 사용할 소켓 객체
 
         for i in range(5):
@@ -24,15 +29,16 @@ class Client:
                 break
             except Exception as e:
                 self.is_connected = False
-                print(f'Something goes wrong while connecting to server. Trying again...{i+1}')
+                print(e)
 
                 if i >= 4:
                     exit()
 
         self.create_cap()
 
-        ret, self.video_frame = self.cap.read()
-        print(self.video_frame.shape)
+        ret, self.raw_frame = self.cap.read()
+        self.enc_frame = cv2.imencode('.webp', self.raw_frame)
+        print(self.raw_frame.shape)
 
         thread_1 = Thread(target=self.get_frame, args=([self.cap]), daemon=True)
         thread_1.start()
@@ -55,7 +61,10 @@ class Client:
             if n == 4:
                 success, im = cap.retrieve()
                 im = cv2.resize(im, dsize=None, fx=0.3, fy=0.3)
-                self.video_frame = im
+                ret, self.enc_frame = cv2.imencode('.webp', im)
+                ts = datetime.fromtimestamp(time.time())
+                print(f'captured {self.cap_frame} th frame at {ts}')
+                self.cap_frame += 1
                 n = 0
 
     # 캡처 객체 해제
@@ -66,7 +75,7 @@ class Client:
     # 이미지를 바이너리로 변환 후 서버로 전송
     def send_to_server(self):
         try:
-            self.pickle_frame = pickle.dumps(self.video_frame)  # 이미지 프레임 바이너리화
+            self.pickle_frame = pickle.dumps(self.enc_frame)  # 이미지 프레임 바이너리화
             self.msg_size = struct.pack("L", len(self.pickle_frame))
             self.socket.sendall(self.msg_size + self.pickle_frame)
         except Exception as e:
@@ -80,7 +89,9 @@ class Client:
         self.socket.close()
 
 def main_function():
-    client = Client(host_addr='127.0.0.1', host_port=9999, cam_src=0)
+
+    # hikvision address: rtsp://admin:hikvision123@192.168.11.69:554/ISAPI/streaming/channels/101
+    client = Client(host_addr=opt.host_id, host_port=opt.host_port, cam_src=opt.src)
 
     try:
         while True:
