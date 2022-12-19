@@ -198,41 +198,6 @@ class Server:
                     cv2.imshow("inference window", im0)
                     cv2.waitKey(1)
 
-        # t0 = time.time()
-        # img = self.img.copy()
-        # img = torch.from_numpy(img).to(self.device)
-        # img = img.half() if self.half else img.float()   # uint8 to fp16/32
-        # img /= 255.0 # 0 - 255 to 0.0 - 1.0
-        # if img.ndimension() == 3:
-        #     img = img.unsqueeze(0)
-
-        # # Warmup
-        # if self.device.type != 'cpu' and (self.old_img_b != img.shape[0] or self.old_img_h != img.shape[2] or self.old_img_w != img.shape[3]):
-        #     self.old_img_b = img.shape[0]
-        #     self.old_img_h = img.shape[2]
-        #     self.old_img_w = img.shape[3]
-        #     for i in range(3):
-        #         self.model(img, augment=opt.augment)[0]
-
-        # # Inference
-        # t1 = time_synchronized()
-        # with torch.no_grad():
-        #     self.pred = self.model(img, augment=opt.augment)[0]
-        # t2 = time_synchronized()
-
-        # # Apply NMS
-        # # self.pred = non_max_suppression(self.pred, opt.conf_thres, opt.iou_thres, classes=opt.classes, agnostic=opt.agnostic_nms)
-        # # t3 = time_synchronized()
-
-        # # Apply Classifier
-        # # if self.classify:
-        # #     self.pred = apply_classifier(self.pred, self.modelc, self.img, im0)
-
-        # # Process detections
-        # for i, det in enumerate(self.pred):
-        #     print(det)
-        
-        
 def main_function():
     server = Server(opt.host_id, opt.host_port)
     server.yolo_init()
