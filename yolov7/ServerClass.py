@@ -6,6 +6,7 @@ import numpy as np
 import struct
 import argparse
 import time
+from datetime import datetime
 
 import torch
 import torch.backends.cudnn as cudnn
@@ -27,13 +28,14 @@ class Server:
         self.HOST_ADDR = host_addr  # 자신의 주소
         self.HOST_PORT = host_port  # 개방할 포트 번호
 
-        self.socket = socket.socket()
+        self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.socket.bind((self.HOST_ADDR, self.HOST_PORT))
 
         self.listen_to_client()
 
         self.data_received = None
         self.img = None
+        self.img_idx = 0
 
         # argparse
         self.source, self.weights, self.view_img, self.save_txt, self.imgsz, self.trace = opt.source, opt.weights, opt.view_img, opt.save_txt, opt.img_size, not opt.no_trace
@@ -70,12 +72,19 @@ class Server:
             data = data[msg_size:]
 
             self.img = pickle.loads(frame_data)
+
+            ts = datetime.fromtimestamp(time.time())
+            print(f'decoded {self.img_idx}th frame at {ts}')
+
         except Exception as e:
             print(e)
 
     # 클라이언트로 수신 완료 에코
     def send_to_client(self):
         self.client_socket.send('good'.encode())
+
+        ts = datetime.fromtimestamp(time.time())
+        print(f'echo back {self.img_idx}th frame at {ts}')
 
     # 이미지 표출
     def show_frame(self):
@@ -199,13 +208,14 @@ class Server:
 
 def main_function():
     server = Server(opt.host_id, opt.host_port)
-    server.yolo_init()
+    # server.yolo_init()
 
     while True:
         server.receive_from_client()
-        # server.show_frame()
+        server.show_frame()
         # server.yolo_inference()
         server.send_to_client()
+        server.img_idx += 1
 
         if cv2.waitKey(1) == ord('q'):
             break
