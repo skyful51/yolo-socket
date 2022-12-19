@@ -204,7 +204,7 @@ def main_function():
     while True:
         server.receive_from_client()
         # server.show_frame()
-        server.yolo_inference()
+        # server.yolo_inference()
         server.send_to_client()
 
         if cv2.waitKey(1) == ord('q'):
