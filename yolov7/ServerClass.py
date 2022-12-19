@@ -27,8 +27,7 @@ class Server:
         self.HOST_ADDR = host_addr  # 자신의 주소
         self.HOST_PORT = host_port  # 개방할 포트 번호
 
-        self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        self.socket = socket.socket()
         self.socket.bind((self.HOST_ADDR, self.HOST_PORT))
 
         self.listen_to_client()
