@@ -35,6 +35,9 @@ class Server:
 
         self.data_received = None
         self.dec_frame = None
+
+        self.img_h, self.img_w = 0, 0
+
         self.img_idx = 0
 
         # argparse
@@ -73,6 +76,8 @@ class Server:
 
             img = pickle.loads(frame_data)
             self.dec_frame = cv2.imdecode(img, 1)
+
+            self.img_h, self.img_w, _ = self.dec_frame.shape
 
             ts = datetime.fromtimestamp(time.time())
 
@@ -134,6 +139,9 @@ class Server:
 
     # Run inference
     def yolo_inference(self):
+
+        is_detected = False
+
         try:
             dataset = LoadImages(self.source, img_size=self.imgsz, stride=self.stride, frame=self.dec_frame)
 
@@ -187,18 +195,38 @@ class Server:
                             n = (det[:, -1] == c).sum()  # detections per class
                             s += f"{n} {self.names[int(c)]}{'s' * (n > 1)}, "  # add to string
 
+                        # 탐지된 bbox 좌표들을 모은 리스트
+                        global all_detected_bbox
+                        all_detected_bbox = []
+
                         # Write results
                         for *xyxy, conf, cls in reversed(det):
-                        #     if save_txt:  # Write to file
-                        #         xywh = (xyxy2xywh(torch.tensor(xyxy).view(1, 4)) / gn).view(-1).tolist()  # normalized xywh
-                        #         line = (cls, *xywh, conf) if opt.save_conf else (cls, *xywh)  # label format
-                        #         with open(txt_path + '.txt', 'a') as f:
-                        #             f.write(('%g ' * len(line)).rstrip() % line + '\n')
+                            if self.save_txt:  # Write to file
+                                xywh = (xyxy2xywh(torch.tensor(xyxy).view(1, 4)) / gn).view(-1).tolist()  # normalized xywh
+
+                                # xywh bbox 그리기 위해 좌표 변환
+                                x, y, w, h = xywh[0], xywh[1], xywh[2], xywh[3]
+                                left = int(x * self.img_w - w * self.img_w / 2)
+                                top = int(y * self.img_h - h * self.img_h / 2)
+                                right = int(x * self.img_w + w * self.img_w / 2)
+                                bottom = int(y * self.img_h + h * self.img_h / 2)
+
+                                bbox_coord = [self.names[int(cls)], left, top, right, bottom]
+                                all_detected_bbox.append(bbox_coord)
+
+                                line = (cls, *xywh, conf) if opt.save_conf else (cls, *xywh)  # label format
+                                is_detected = True
 
                             if self.view_img:  # Add bbox to image
                                 label = f'{self.names[int(cls)]} {conf:.2f}'
                                 plot_one_box(xyxy, im0, label=label, color=self.colors[int(cls)], line_thickness=1)
                                 self.img_frame = im0.copy()
+
+                        # 탐지된 bbox 정보 클라이언트로 전송
+                        b_bbox_coord = pickle.dumps(all_detected_bbox)
+                        # self.client_socket.sendall(b_bbox_coord)
+                        print(all_detected_bbox)
+                        all_detected_bbox = None
 
                     # Print time (inference + NMS)
                     print(f'{s}Done. ({(1E3 * (t2 - t1)):.1f}ms) Inference, ({(1E3 * (t3 - t2)):.1f}ms) NMS')
@@ -207,6 +235,11 @@ class Server:
                     if self.view_img:
                         cv2.imshow("inference window", im0)
                         cv2.waitKey(1)
+
+            if not is_detected:
+                b_null_detected = pickle.dumps([])
+                self.client_socket.sendall(b_null_detected)
+                pass
         
         except Exception as e:
             print(e)
@@ -237,8 +270,8 @@ if __name__ == '__main__':
     parser.add_argument('--conf-thres', type=float, default=0.25, help='object confidence threshold')
     parser.add_argument('--iou-thres', type=float, default=0.45, help='IOU threshold for NMS')
     parser.add_argument('--device', default='', help='cuda device, i.e. 0 or 0,1,2,3 or cpu')
-    parser.add_argument('--view-img', default=True, help='display results')
-    parser.add_argument('--save-txt', action='store_true', help='save results to *.txt')
+    parser.add_argument('--view-img', default=False, help='display results')
+    parser.add_argument('--save-txt', default=True, help='save results to *.txt')
     parser.add_argument('--save-conf', action='store_true', help='save confidences in --save-txt labels')
     parser.add_argument('--nosave', action='store_true', help='do not save images/videos')
     parser.add_argument('--classes', nargs='+', type=int, help='filter by class: --class 0, or --class 0 2 3')
