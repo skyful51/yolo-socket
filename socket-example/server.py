@@ -18,7 +18,7 @@ from yolov7.utils.datasets import LoadStreams, LoadImages
 from yolov7.utils.general import check_img_size, check_requirements, check_imshow, non_max_suppression, apply_classifier, \
     scale_coords, xyxy2xywh, strip_optimizer, set_logging, increment_path
 from yolov7.utils.plots import plot_one_box
-from yolov7.utils.torch_utils import select_device, load_classifier, time_synchronized, TracedModel
+from yolov7.utils.torch_utils2 import select_device, load_classifier, time_synchronized, TracedModel
 
 HOST_ADDR = '127.0.0.1'
 HOST_PORT = 9999

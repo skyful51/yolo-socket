@@ -18,7 +18,7 @@ from utils.datasets2 import LoadStreams, LoadImages
 from utils.general import check_img_size, check_requirements, check_imshow, non_max_suppression, apply_classifier, \
     scale_coords, xyxy2xywh, strip_optimizer, set_logging, increment_path
 from utils.plots import plot_one_box
-from utils.torch_utils import select_device, load_classifier, time_synchronized, TracedModel
+from utils.torch_utils2 import select_device, load_classifier, time_synchronized, TracedModel
 
 # 서버측 클래스
 class Server:
