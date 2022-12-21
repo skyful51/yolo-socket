@@ -1,11 +1,6 @@
-yolo-socket
+### yolo-socket
+yolov7 모델 성능 확인 및 간단한 소켓 통신 디버깅 진행하는 debug branch.
 ---
-YOLOv7 detect 모델을 사용하시려면 detect.py 파일을 실행하시면 됩니다.YOLOv7 + 소켓 통신을 같이 사용하시려면 서버에서는 ServerClass.py를, 클라이언트에서는 ClientClass.py를 실행하시면 됩니다.
+https://drive.google.com/drive/folders/1x_PtKvTNjT3ewQwW7t3H0QHGzbIbk6hC?usp=sharing 키오스크용 객체 탐지 가중치 파일입니다.
 ---
-https://drive.google.com/drive/folders/1x_PtKvTNjT3ewQwW7t3H0QHGzbIbk6hC?usp=sharing
-키오스크용 객체 탐지 가중치 파일입니다.
-1. yolov7_w6_1280.pt ->
-    1280 이미지 크기로 w6 모델을 학습시킨 가중치입니다.
-
-2. yolow_del-face_nomixup.py ->
-    얼굴 클래스 없이 학습시킨 가중치입니다.
+서버 컴퓨터에서 detect_server.py / 클라리언트 컴퓨터에서 kiosk_client.py 실행하면 됩니다.
